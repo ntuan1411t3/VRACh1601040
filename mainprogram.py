@@ -64,6 +64,21 @@ def readImages(FILE_PATH):
 
 
 if __name__ == '__main__':
+    # test SIFT
+    img = cv2.imread('/home/hh/imgvratest/happy_29410.jpg')
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    sift = cv2.xfeatures2d.SIFT_create()
+
+    kp, des = sift.detectAndCompute(gray,None)
+    print(len(kp))
+    print(des[0])
+    print(len(des))
+    print(len(des[0]))
+    print(kp[0].angle)
+
+    cv2.drawKeypoints(gray, kp, outImage=img)
+    cv2.imwrite('abc.jpg', img)
+
     # create data
     # list_images, list_labels, list_emotions = readImages('fer2013.csv')
     # file_handler = open("ximg.pt", 'wb')
@@ -170,26 +185,36 @@ if __name__ == '__main__':
     # del model  # deletes the existing model
 
     # predict
-    x_img = open('ximg.pt', 'rb')
-    list_images = pickle.load(x_img)
-    x_test = np.asarray(list_images)
-    x_test = x_test.reshape(x_test.shape[0], SIZE_FACE, SIZE_FACE, 1)
-    x_test = x_test.astype('float32')
-    x_test /= 255
-
-    l_img = open('limg.pt', 'rb')
-    list_labels = pickle.load(l_img)
-    list_labels = np.asarray(list_labels)
-    l_test = list_labels
-
-    y_img = open('yimg.pt', 'rb')
-    list_labels_y = pickle.load(y_img)
-    list_labels_y = np.asarray(list_labels_y)
-    y_test = list_labels_y
-    model = load_model('my_model.h5')  # load model
-    score = model.evaluate(x_test[1000:1001], y_test[1000:1001], verbose=0)
-    print("score = " + str(score))
-    pred = model.predict(x_test[1000:1001])
-    print("pred label = " + str(EMOTIONS[pred.argmax()]))
-    print("pred max = " + str(pred.max()))
-    print("true label = " + l_test[1000])
+    # x_img = open('ximg.pt', 'rb')
+    # list_images = pickle.load(x_img)
+    # x_test = np.asarray(list_images)
+    # x_test = x_test.reshape(x_test.shape[0], SIZE_FACE, SIZE_FACE, 1)
+    # x_test = x_test.astype('float32')
+    # x_test /= 255
+    #
+    # l_img = open('limg.pt', 'rb')
+    # list_labels = pickle.load(l_img)
+    # list_labels = np.asarray(list_labels)
+    # l_test = list_labels
+    #
+    # y_img = open('yimg.pt', 'rb')
+    # list_labels_y = pickle.load(y_img)
+    # list_labels_y = np.asarray(list_labels_y)
+    # y_test = list_labels_y
+    # model = load_model('my_model.h5')  # load model
+    #
+    # id_test = 3000
+    # xx_test = x_test[id_test:id_test+1]
+    # #yy_test = y_test[1000:img1001]
+    # ll_test = l_test[id_test]
+    # img_test = list_images[id_test]
+    #
+    # #score = model.evaluate(x_test, y_test, verbose=0)
+    # #print("score = " + str(score))
+    # pred = model.predict(xx_test)
+    # print("pred label = " + str(EMOTIONS[pred.argmax()]))
+    # print("pred max = " + str(pred.max()))
+    # print("true label = " + ll_test)
+    # cv2.imshow('image', img_test)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
