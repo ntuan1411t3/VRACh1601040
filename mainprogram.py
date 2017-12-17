@@ -11,6 +11,12 @@ from keras.models import Sequential
 import matplotlib.pylab as plt
 import pickle
 from keras.models import load_model
+import utilities as ut
+import os
+from random import shuffle
+from nltk import SklearnClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
 
 SIZE_FACE = 48
 NUM_CLASSES = 7
@@ -63,158 +69,254 @@ def readImages(FILE_PATH):
     return list_images, labels, labels_emotion
 
 
-if __name__ == '__main__':
-    # test SIFT
-    img = cv2.imread('/home/hh/imgvratest/happy_29410.jpg')
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    sift = cv2.xfeatures2d.SIFT_create()
-
-    kp, des = sift.detectAndCompute(gray,None)
-    print(len(kp))
-    print(des[0])
-    print(len(des))
-    print(len(des[0]))
-    print(kp[0].angle)
-
-    cv2.drawKeypoints(gray, kp, outImage=img)
-    cv2.imwrite('abc.jpg', img)
-
+def create_data():
     # create data
-    # list_images, list_labels, list_emotions = readImages('fer2013.csv')
-    # file_handler = open("ximg.pt", 'wb')
-    # pickle.dump(list_images, file_handler)
-    # file_handler = open("yimg.pt", 'wb')
-    # pickle.dump(list_labels, file_handler)
-    # file_handler = open("limg.pt", 'wb')
-    # pickle.dump(list_emotions, file_handler)
+    list_images, list_labels, list_emotions = readImages('fer2013.csv')
+    file_handler = open("ximg.pt", 'wb')
+    pickle.dump(list_images, file_handler)
+    file_handler = open("yimg.pt", 'wb')
+    pickle.dump(list_labels, file_handler)
+    file_handler = open("limg.pt", 'wb')
+    pickle.dump(list_emotions, file_handler)
 
+
+def create_train_test_data():
     # write images
-    # x_img = open('ximg.pt', 'rb')
-    # list_images = pickle.load(x_img)
-    # list_images = np.asarray(list_images)
-    # x_train = list_images[0:NUM_TRAIN]
-    # x_test = list_images[NUM_TRAIN:NUM_TRAIN + NUM_TEST]
-    #
-    # l_img = open('limg.pt', 'rb')
-    # list_labels = pickle.load(l_img)
-    # list_labels = np.asarray(list_labels)
-    # l_train = list_labels[0:NUM_TRAIN]
-    # l_test = list_labels[NUM_TRAIN:NUM_TRAIN + NUM_TEST]
-    #
-    # index = 0
-    # for item, label in zip(x_train, l_train):
-    #     cv2.imwrite("/home/hh/imgvratrain/" + str(label) + "_" + str(index) + ".jpg", item)
-    #     index += 1
-    #
-    # for item, label in zip(x_test, l_test):
-    #     cv2.imwrite("/home/hh/imgvratest/" + str(label) + "_" + str(index) + ".jpg", item)
-    #     index += 1
+    x_img = open('ximg.pt', 'rb')
+    list_images = pickle.load(x_img)
+    list_images = np.asarray(list_images)
+    x_train = list_images[0:NUM_TRAIN]
+    x_test = list_images[NUM_TRAIN:NUM_TRAIN + NUM_TEST]
 
-    # # prepare data
-    # img_x, img_y = SIZE_FACE, SIZE_FACE
-    # input_shape = (img_x, img_y, 1)
-    #
-    # x_img = open('ximg.pt', 'rb')
-    # list_images = pickle.load(x_img)
-    # list_images = np.asarray(list_images)
-    # x_train = list_images[0:NUM_TRAIN]
-    # x_test = list_images[NUM_TRAIN:NUM_TRAIN + NUM_TEST]
-    # x_train = x_train.reshape(x_train.shape[0], img_x, img_y, 1)
-    # x_test = x_test.reshape(x_test.shape[0], img_x, img_y, 1)
-    # x_train = x_train.astype('float32')
-    # x_test = x_test.astype('float32')
-    # x_train /= 255
-    # x_test /= 255
-    # print('x_train shape:', x_train.shape)
-    # print(x_train.shape[0], 'train samples')
-    # print(x_test.shape[0], 'test samples')
-    #
-    # y_img = open('yimg.pt', 'rb')
-    # list_labels = pickle.load(y_img)
-    # list_labels = np.asarray(list_labels)
-    #
-    # y_train = list_labels[0:NUM_TRAIN]
-    # y_test = list_labels[NUM_TRAIN:NUM_TRAIN + NUM_TEST]
-    # #
-    # # #build a model
-    # batch_size = 128
-    # num_classes = 7
-    # epochs = 10
-    #
-    # model = Sequential()
-    # model.add(Conv2D(32, kernel_size=(5, 5), strides=(1, 1),
-    #                  activation='relu',
-    #                  input_shape=input_shape))
-    # model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-    # model.add(Conv2D(64, (5, 5), activation='relu'))
-    # model.add(MaxPooling2D(pool_size=(2, 2)))
-    # model.add(Flatten())
-    # model.add(Dense(1000, activation='relu'))
-    # model.add(Dense(num_classes, activation='softmax'))
-    #
-    # model.compile(loss=keras.losses.categorical_crossentropy,
-    #               optimizer=keras.optimizers.Adam(),
-    #               metrics=['accuracy'])
-    #
-    #
-    # class AccuracyHistory(keras.callbacks.Callback):
-    #     def on_train_begin(self, logs={}):
-    #         self.acc = []
-    #
-    #     def on_epoch_end(self, batch, logs={}):
-    #         self.acc.append(logs.get('acc'))
-    #
-    #
-    # history = AccuracyHistory()
-    #
-    # model.fit(x_train, y_train,
-    #           batch_size=batch_size,
-    #           epochs=epochs,
-    #           verbose=1,
-    #           validation_data=(x_test, y_test),
-    #           callbacks=[history])
-    # score = model.evaluate(x_test, y_test, verbose=0)
-    # print('Test loss:', score[0])
-    # print('Test accuracy:', score[1])
-    # plt.plot(range(1, 11), history.acc)
-    # plt.xlabel('Epochs')
-    # plt.ylabel('Accuracy')
-    # plt.show()
-    #
-    # model.save('my_model.h5')  # creates a HDF5 file 'my_model.h5'
-    # del model  # deletes the existing model
+    l_img = open('limg.pt', 'rb')
+    list_labels = pickle.load(l_img)
+    list_labels = np.asarray(list_labels)
+    l_train = list_labels[0:NUM_TRAIN]
+    l_test = list_labels[NUM_TRAIN:NUM_TRAIN + NUM_TEST]
 
+    index = 0
+    for item, label in zip(x_train, l_train):
+        cv2.imwrite("/home/hh/imgvratrain/" + str(label) + "_" + str(index) + ".jpg", item)
+        index += 1
+
+    for item, label in zip(x_test, l_test):
+        cv2.imwrite("/home/hh/imgvratest/" + str(label) + "_" + str(index) + ".jpg", item)
+        index += 1
+
+
+def train_model_cnn():
+    img_x, img_y = SIZE_FACE, SIZE_FACE
+    input_shape = (img_x, img_y, 1)
+
+    x_img = open('ximg.pt', 'rb')
+    list_images = pickle.load(x_img)
+    list_images = np.asarray(list_images)
+    x_train = list_images[0:NUM_TRAIN]
+    x_test = list_images[NUM_TRAIN:NUM_TRAIN + NUM_TEST]
+    x_train = x_train.reshape(x_train.shape[0], img_x, img_y, 1)
+    x_test = x_test.reshape(x_test.shape[0], img_x, img_y, 1)
+    x_train = x_train.astype('float32')
+    x_test = x_test.astype('float32')
+    x_train /= 255
+    x_test /= 255
+    print('x_train shape:', x_train.shape)
+    print(x_train.shape[0], 'train samples')
+    print(x_test.shape[0], 'test samples')
+
+    y_img = open('yimg.pt', 'rb')
+    list_labels = pickle.load(y_img)
+    list_labels = np.asarray(list_labels)
+
+    y_train = list_labels[0:NUM_TRAIN]
+    y_test = list_labels[NUM_TRAIN:NUM_TRAIN + NUM_TEST]
+    #
+    # #build a model
+    batch_size = 128
+    num_classes = 7
+    epochs = 10
+
+    model = Sequential()
+    model.add(Conv2D(32, kernel_size=(5, 5), strides=(1, 1),
+                     activation='relu',
+                     input_shape=input_shape))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Conv2D(64, (5, 5), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Flatten())
+    model.add(Dense(1000, activation='relu'))
+    model.add(Dense(num_classes, activation='softmax'))
+
+    model.compile(loss=keras.losses.categorical_crossentropy,
+                  optimizer=keras.optimizers.Adam(),
+                  metrics=['accuracy'])
+
+    class AccuracyHistory(keras.callbacks.Callback):
+        def on_train_begin(self, logs={}):
+            self.acc = []
+
+        def on_epoch_end(self, batch, logs={}):
+            self.acc.append(logs.get('acc'))
+
+    history = AccuracyHistory()
+
+    model.fit(x_train, y_train,
+              batch_size=batch_size,
+              epochs=epochs,
+              verbose=1,
+              validation_data=(x_test, y_test),
+              callbacks=[history])
+    score = model.evaluate(x_test, y_test, verbose=0)
+    print('Test loss:', score[0])
+    print('Test accuracy:', score[1])
+    plt.plot(range(1, 11), history.acc)
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.show()
+
+    model.save('my_model.h5')  # creates a HDF5 file 'my_model.h5'
+    del model  # deletes the existing model
+
+
+def evaluate_model():
     # predict
-    # x_img = open('ximg.pt', 'rb')
-    # list_images = pickle.load(x_img)
-    # x_test = np.asarray(list_images)
-    # x_test = x_test.reshape(x_test.shape[0], SIZE_FACE, SIZE_FACE, 1)
-    # x_test = x_test.astype('float32')
-    # x_test /= 255
-    #
-    # l_img = open('limg.pt', 'rb')
-    # list_labels = pickle.load(l_img)
-    # list_labels = np.asarray(list_labels)
-    # l_test = list_labels
-    #
-    # y_img = open('yimg.pt', 'rb')
-    # list_labels_y = pickle.load(y_img)
-    # list_labels_y = np.asarray(list_labels_y)
-    # y_test = list_labels_y
-    # model = load_model('my_model.h5')  # load model
-    #
-    # id_test = 3000
-    # xx_test = x_test[id_test:id_test+1]
-    # #yy_test = y_test[1000:img1001]
+    x_img = open('ximg.pt', 'rb')
+    list_images = pickle.load(x_img)
+    x_test = np.asarray(list_images)
+    x_test = x_test.reshape(x_test.shape[0], SIZE_FACE, SIZE_FACE, 1)
+    x_test = x_test.astype('float32')
+    x_test /= 255
+
+    l_img = open('limg.pt', 'rb')
+    list_labels = pickle.load(l_img)
+    list_labels = np.asarray(list_labels)
+    l_test = list_labels
+
+    y_img = open('yimg.pt', 'rb')
+    list_labels_y = pickle.load(y_img)
+    list_labels_y = np.asarray(list_labels_y)
+    y_test = list_labels_y
+
+    model = load_model('my_model.h5')  # load model
+    score = model.evaluate(x_test, y_test, verbose=0)
+    print("score = " + str(score))
+
+    # test 1 img
+    # id_test = 29000
+    # xx_test = x_test[id_test:id_test + 1]
     # ll_test = l_test[id_test]
     # img_test = list_images[id_test]
-    #
-    # #score = model.evaluate(x_test, y_test, verbose=0)
-    # #print("score = " + str(score))
     # pred = model.predict(xx_test)
     # print("pred label = " + str(EMOTIONS[pred.argmax()]))
     # print("pred max = " + str(pred.max()))
-    # print("true label = " + ll_test)
-    # cv2.imshow('image', img_test)
+    # cv2.namedWindow("cam-test", cv2.WINDOW_NORMAL)
+    # cv2.imshow("cam-test", img_test)
     # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    # cv2.destroyWindow("cam-test")
+    # load camera
+    # img_cam = ut.cam_to_img()
+    # list_img_cam = []
+    # list_img_cam.append(img_cam)
+    #
+    # x_test = np.asarray(list_img_cam)
+    # x_test = x_test.reshape(x_test.shape[0], SIZE_FACE, SIZE_FACE, 1)
+    # x_test = x_test.astype('float32')
+    # x_test /= 255
+    # xx_test = x_test[0:1]
+    # pred = model.predict(xx_test)
+    # print("pred label = " + str(EMOTIONS[pred.argmax()]))
+    # print("pred max = " + str(pred.max()))
+
+
+def create_feature_centers():
+    list_des_sift = []
+
+    all_imgs = os.listdir("/home/hh/imgvratrain/")
+    shuffle(all_imgs)
+
+    for img_name in all_imgs:
+        img = cv2.imread('/home/hh/imgvratrain/' + img_name)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        sift = cv2.xfeatures2d.SIFT_create()
+        kp, des = sift.detectAndCompute(gray, None)
+        for i in range(len(kp)):
+            list_des_sift.append(des[i])
+
+    list_des_sift = np.asarray(list_des_sift)
+
+    # define criteria and apply kmeans()
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    ret, label, center = cv2.kmeans(list_des_sift, 100, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+
+    file_handler = open("kmean_centers.pt", 'wb')
+    pickle.dump(center, file_handler)
+
+
+def load_feature_centers():
+    center_feature = open('kmean_centers.pt', 'rb')
+    center_list = pickle.load(center_feature)
+    return center_list
+
+
+def img_to_vector_shift_Bow(img_path, img_name, list_centers):
+    img = cv2.imread(img_path + img_name)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    sift = cv2.xfeatures2d.SIFT_create()
+    kp, des = sift.detectAndCompute(gray, None)
+
+    img_vector = np.zeros(len(list_centers))
+
+    for i in range(len(kp)):
+        min_group = 0
+        dist_min = np.linalg.norm(des[i] - list_centers[0])
+        for j in range(len(list_centers)):
+            dist = np.linalg.norm(des[i] - list_centers[j])
+            if dist_min > dist:
+                dist_min = dist
+                min_group = j
+
+        img_vector[min_group] = int(img_vector[min_group]) + 1
+
+    # get label
+    label = img_name.split("_")[0]
+
+    return img_vector, label
+
+
+if __name__ == '__main__':
+    # evaluate_model()
+    # create_feature_centers()
+    list_centers = load_feature_centers()
+
+    train_path = "/home/hh/imgvratest/"
+    list_train_file = os.listdir(train_path)
+
+    train_data = []
+
+    for item in list_train_file:
+        vect = {}
+        vt, label = img_to_vector_shift_Bow(train_path, item, list_centers)
+        # print(vt, label)
+        for index in range(len(vt)):
+            vect[index] = vt[index]
+        tup1 = (vect, EMOTIONS.index(label))
+        train_data.append(tup1)
+
+    test_data = []
+    label_test = []
+    for item in list_train_file[3000:5000]:
+        vect = {}
+        vt, label = img_to_vector_shift_Bow(train_path, item, list_centers)
+        # print(vt, label)
+        for index in range(len(vt)):
+            vect[index] = vt[index]
+        tup1 = (vect)
+        test_data.append(tup1)
+        label_test.append(EMOTIONS.index(label))
+
+    classif = SklearnClassifier(KNeighborsClassifier(5)).train(train_data)
+
+    # measure accuracy
+    y_pred = classif.classify_many(test_data)
+    y_true = label_test
+    acc_avg1 = accuracy_score(y_true, y_pred)
+    print(acc_avg1)
