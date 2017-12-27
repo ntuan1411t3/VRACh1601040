@@ -18,21 +18,29 @@ from nltk import SklearnClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 
+
+# size of image ( width and height )
 SIZE_FACE = 48
+# number of class
 NUM_CLASSES = 7
+
+# number of train and test set
 NUM_TRAIN = 28708
 NUM_TEST = 7179
+
+# label
 EMOTIONS = ['angry', 'disgusted', 'fearful', 'happy', 'sad', 'surprised', 'neutral']
 
 
 # 0=Angry, 1=Disgust, 2=Fear, 3=Happy, 4=Sad, 5=Surprise, 6=Neutral
 
+# vector an input
 def emotion_to_vec(x):
     d = np.zeros(len(EMOTIONS))
     d[x] = 1.0
     return d
 
-
+# read data of image
 def data_to_image(data):
     # print data
     data_image = np.fromstring(str(data), dtype=np.uint8, sep=' ').reshape((SIZE_FACE, SIZE_FACE))
@@ -41,7 +49,7 @@ def data_to_image(data):
     # data_image = format_image(data_image)
     return data_image
 
-
+# read image , content and label form path
 def readImages(FILE_PATH):
     data = pd.read_csv(FILE_PATH)
 
@@ -68,7 +76,7 @@ def readImages(FILE_PATH):
 
     return list_images, labels, labels_emotion
 
-
+# create file data object
 def create_data():
     # create data
     list_images, list_labels, list_emotions = readImages('fer2013.csv')
@@ -79,7 +87,7 @@ def create_data():
     file_handler = open("limg.pt", 'wb')
     pickle.dump(list_emotions, file_handler)
 
-
+# create training and test data
 def create_train_test_data():
     # write images
     x_img = open('ximg.pt', 'rb')
@@ -103,7 +111,7 @@ def create_train_test_data():
         cv2.imwrite("/home/hh/imgvratest/" + str(label) + "_" + str(index) + ".jpg", item)
         index += 1
 
-
+# build model cnn
 def train_model_cnn():
     img_x, img_y = SIZE_FACE, SIZE_FACE
     input_shape = (img_x, img_y, 1)
@@ -176,7 +184,7 @@ def train_model_cnn():
     model.save('my_model.h5')  # creates a HDF5 file 'my_model.h5'
     del model  # deletes the existing model
 
-
+# test a model with test set
 def evaluate_model():
     # predict
     x_img = open('ximg.pt', 'rb')
@@ -226,7 +234,7 @@ def evaluate_model():
     # print("pred label = " + str(EMOTIONS[pred.argmax()]))
     # print("pred max = " + str(pred.max()))
 
-
+# create feature center for KNN
 def create_feature_centers():
     list_des_sift = []
 
@@ -250,13 +258,13 @@ def create_feature_centers():
     file_handler = open("kmean_centers.pt", 'wb')
     pickle.dump(center, file_handler)
 
-
+# load feature center
 def load_feature_centers():
     center_feature = open('kmean_centers.pt', 'rb')
     center_list = pickle.load(center_feature)
     return center_list
 
-
+# convert image to vector SIFT-BagOfWords
 def img_to_vector_shift_Bow(img_path, img_name, list_centers):
     img = cv2.imread(img_path + img_name)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -283,11 +291,11 @@ def img_to_vector_shift_Bow(img_path, img_name, list_centers):
 
 
 if __name__ == '__main__':
-    # evaluate_model()
+    evaluate_model()
 
     # knn build model
     # create_feature_centers()
-    list_centers = load_feature_centers()
+    # list_centers = load_feature_centers()
     #
     # train_path = "/home/hh/imgvratrain/"
     # list_train_file = os.listdir(train_path)
@@ -308,27 +316,27 @@ if __name__ == '__main__':
     #     pickle.dump(classif, fid)
 
     # knn demo
-
-    test_data = []
-    label_test = []
-    test_path = "/home/hh/imgvratest/"
-    list_test_file = os.listdir(test_path)
-
-    for item in list_test_file:
-        vect = {}
-        vt, label = img_to_vector_shift_Bow(test_path, item, list_centers)
-        # print(vt, label)
-        for index in range(len(vt)):
-            vect[index] = vt[index]
-        tup1 = (vect)
-        test_data.append(tup1)
-        label_test.append(EMOTIONS.index(label))
-
-    # measure accuracy
-    with open('knn.pkl', 'rb') as fid:
-        knn_model = pickle.load(fid)
-
-    y_pred = knn_model.classify_many(test_data)
-    y_true = label_test
-    acc_avg1 = accuracy_score(y_true, y_pred)
-    print(acc_avg1)
+    # list_centers = load_feature_centers()
+    # test_data = []
+    # label_test = []
+    # test_path = "/home/hh/imgvratest/"
+    # list_test_file = os.listdir(test_path)
+    #
+    # for item in list_test_file:
+    #     vect = {}
+    #     vt, label = img_to_vector_shift_Bow(test_path, item, list_centers)
+    #     # print(vt, label)
+    #     for index in range(len(vt)):
+    #         vect[index] = vt[index]
+    #     tup1 = (vect)
+    #     test_data.append(tup1)
+    #     label_test.append(EMOTIONS.index(label))
+    #
+    # # measure accuracy
+    # with open('knn.pkl', 'rb') as fid:
+    #     knn_model = pickle.load(fid)
+    #
+    # y_pred = knn_model.classify_many(test_data)
+    # y_true = label_test
+    # acc_avg1 = accuracy_score(y_true, y_pred)
+    # print(acc_avg1)
