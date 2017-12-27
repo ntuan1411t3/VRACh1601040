@@ -284,28 +284,39 @@ def img_to_vector_shift_Bow(img_path, img_name, list_centers):
 
 if __name__ == '__main__':
     # evaluate_model()
+
+    # knn build model
     # create_feature_centers()
     list_centers = load_feature_centers()
+    #
+    # train_path = "/home/hh/imgvratrain/"
+    # list_train_file = os.listdir(train_path)
+    #
+    # train_data = []
+    #
+    # for item in list_train_file:
+    #     vect = {}
+    #     vt, label = img_to_vector_shift_Bow(train_path, item, list_centers)
+    #     # print(vt, label)
+    #     for index in range(len(vt)):
+    #         vect[index] = vt[index]
+    #     tup1 = (vect, EMOTIONS.index(label))
+    #     train_data.append(tup1)
+    #
+    # classif = SklearnClassifier(KNeighborsClassifier(5)).train(train_data)
+    # with open('knn.pkl', 'wb') as fid:
+    #     pickle.dump(classif, fid)
 
-    train_path = "/home/hh/imgvratest/"
-    list_train_file = os.listdir(train_path)
-
-    train_data = []
-
-    for item in list_train_file:
-        vect = {}
-        vt, label = img_to_vector_shift_Bow(train_path, item, list_centers)
-        # print(vt, label)
-        for index in range(len(vt)):
-            vect[index] = vt[index]
-        tup1 = (vect, EMOTIONS.index(label))
-        train_data.append(tup1)
+    # knn demo
 
     test_data = []
     label_test = []
-    for item in list_train_file[3000:5000]:
+    test_path = "/home/hh/imgvratest/"
+    list_test_file = os.listdir(test_path)
+
+    for item in list_test_file:
         vect = {}
-        vt, label = img_to_vector_shift_Bow(train_path, item, list_centers)
+        vt, label = img_to_vector_shift_Bow(test_path, item, list_centers)
         # print(vt, label)
         for index in range(len(vt)):
             vect[index] = vt[index]
@@ -313,10 +324,11 @@ if __name__ == '__main__':
         test_data.append(tup1)
         label_test.append(EMOTIONS.index(label))
 
-    classif = SklearnClassifier(KNeighborsClassifier(5)).train(train_data)
-
     # measure accuracy
-    y_pred = classif.classify_many(test_data)
+    with open('knn.pkl', 'rb') as fid:
+        knn_model = pickle.load(fid)
+
+    y_pred = knn_model.classify_many(test_data)
     y_true = label_test
     acc_avg1 = accuracy_score(y_true, y_pred)
     print(acc_avg1)
